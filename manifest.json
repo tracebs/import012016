@@ -1,11 +1,11 @@
 {
     "widget":{
-            "name": "CalgelTask",
-            "description": "Создание задач из сделки",
-            "short_description": "Создание задач из сделки",
-            "code": "calgeltaskv1",
-            "secret_key": "4004294ed1ec5758a024fec77eee762f3d99707ed2f7322308bf858057230291",
-            "version": "1.5.3",
+            "name": "ImportAMO",
+            "description": "Импорт данных из URL",
+            "short_description": "Импорт данных из URL",
+            "code": "importwidget",
+            "secret_key": "7e2a72ef01dda57ee903c61c5d3d24513c297aa4ccbd2ede79327e9e0a63ed74",
+            "version": "1.2.0",
             "interface_version": 2,
             "init_once": false,
             "locale":[
@@ -14,7 +14,8 @@
             "installation": true
             },
     "locations":[
-            "lcard-1",
+            "lcard-1",			
+			"llist-1",		
             "settings"
             ],
     "settings":{   

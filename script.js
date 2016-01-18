@@ -6,10 +6,7 @@ define(['jquery'], function($){
 		var daynum;
 		var monthnum;
 		var yearnum;
-		var zfullname;
-		var wdays;
-		var zprice;
-		var requisite;
+		var datestamp;
 
 
 		this.callbacks = {
@@ -17,9 +14,9 @@ define(['jquery'], function($){
 				//console.log('render'); test 7zip
 
 				var template = '<div><h1>Импорт</h1>'+
-                    '<button class="button-input" id="importhtml">Загрузить</button>'+
-					'<button class="button-input" id="createleadcontact">Импорт</button>'+
-                    '<div id="send_result"></div>'+
+					'<textarea id="linkfield"></textarea>'+
+                    '<button class="button-input" id="importhtml">Загрузить</button>'+					
+                    '<div id="parsehtml"></div>'+
                     '</div>';
 
                 self.render_template({
@@ -38,12 +35,328 @@ define(['jquery'], function($){
 				return true;
 			},
 			bind_actions: function(){
-				$('#createtaskfromlead').on('click', function(){
+				$('#importhtml').on('click', function(){
 
 					self.callbacks.getData();
-					console.log('Start-OnClick-createtaskfromlead');
+					console.log('Start-OnClick-importhtml');
 					
-					console.log('Finish-OnClick-createtaskfromlead');
+					
+					htmlvar = { res: $('#linkfield').val()}		
+					strdomain = "rsdim.dlinkddns.com";
+					
+					if ($('#linkfield').val()==="") {
+						alert("Адрес не может быть пустой строкой");
+					} else {
+						//обработка input
+						$('#parsehtml').hide();
+						console.log("gethtml start linkfield:" + $('#linkfield').val());
+						var idtags = [ "CONTACT_NAME", "CONTACT_EMAIL", "CONTACT_PHONE", "CONTACT_COMPANY", "BRIEF_BRANCH", "BRIEF_SPECIALIZATION", "BRIEF_ROUGH_COST", "BRIEF_TIME_LIMIT", "BRIEF_COMMENT" ];
+
+						adress = $('#linkfield').val();
+						self.crm_post (
+							adress,
+							'',
+							function(data) {
+								//подрезка строчки
+								datastr = "" + data;
+								pos1 = datastr.indexOf('<body>')+6;
+								pos2 = datastr.indexOf('</body>');
+								console.log( 'Pos1:'+pos1 +' Pos2:'+pos2);
+								data2 = datastr.slice(pos1,pos2);
+								//чистим js тэги
+								data3 = data2.replace(/script/g,"")
+								//console.log( 'data3:========'+ data3);
+								$('#parsehtml').html(data3);
+								
+								itexts = "";
+								itextsid = "";
+								arritexts = [];
+								arritextsid = [];
+								console.log( 'each1' );
+								$('#parsehtml').each(function(){
+									console.log( 'each2' );
+									//получаем все input внутри div
+									$(this).find($( ":input" )).each(function(){	
+										//фильтр в цикле
+										currentid = ""+$(this).attr("id");
+										for (var k14 = 0; k14 < idtags.length; k14++) {
+											tmpk = ""+ idtags[k14];
+											if (tmpk==currentid) {
+												cval = ""+$(this).val();
+												cid = ""+$(this).attr("id");
+												itextsid = itextsid+cid+"!-!";									
+												itexts = itexts+cval+"!-!";
+												arritexts.push(cval);
+												arritextsid.push(cid);
+											}
+										}
+									});	
+									//===все textarea======
+									$(this).find($( "textarea" )).each(function(){	
+										//фильтр в цикле
+										currentid = ""+$(this).attr("id");
+										for (var k14 = 0; k14 < idtags.length; k14++) {
+											tmpk = ""+ idtags[k14];
+											if (tmpk==currentid) {
+												cval = ""+$(this).val();
+												cid = ""+$(this).attr("id");
+												itextsid = itextsid+cid+"!-!";									
+												itexts = itexts+cval+"!-!";
+												arritexts.push(cval);
+												arritextsid.push(cid);
+											}
+										}
+									});	
+								});					
+								console.log( 'arritextsid:'+arritextsid.join("---") );		
+								console.log( 'arritexts:'+arritexts.join("---") );
+								//генерация responsible id
+								//создание контакта 
+								flag15 = "";
+								contacts1 = "";
+								emailsarr = [];
+								emails = "";
+								phonesarr = [];
+								phones = "";
+								contactname = "";
+								for (var k14 = 0; k14 < arritextsid.length; k14++) {
+									if (arritextsid[k14]=='CONTACT_EMAIL') {
+										flag15 = "1";
+										emailsarr.push(arritexts[k14]);
+										//emails = emails+arritexts[k14]+',';
+									}
+									if (arritextsid[k14]=='CONTACT_PHONE') {
+										flag15 = "1";
+										phonesarr.push(arritexts[k14])
+										//phones = phones+arritexts[k14]+',';
+									}
+									//CONTACT_NAME
+									if (arritextsid[k14]=='CONTACT_NAME') {										
+										contactname = arritexts[k14];
+									}
+								}	
+								emails = emailsarr.join();
+								phones = phonesarr.join();
+								console.log( 'pe:'+emails+"-----"+phones );
+								if (flag15 == "1") {
+									//861026 - id телефона 861028-id email
+									if (emails=="") {
+										
+									} else {
+										contacts1 = '{"id":861028,"values":[{"value":"'+emails+'","enum":"WORK"}]}';
+									}
+									if (emails=="" || phones=="") {
+										
+									} else {
+										contacts1 = contacts1 + ',';
+									}
+									if (phones=="") {
+										
+									} else {
+										contacts1 = contacts1 + '{"id":861026,"values":[{"value":"'+phones+'","enum":"WORK"}]}';
+									}
+									//'{"id":861028,"value":"'+arritexts[k14]+'"}';
+									//'{"id":861026,"value":"'+arritexts[k14]+'"}';
+									contacts1 = ',"custom_fields":  ['+contacts1+']';
+									
+								}
+								if (contactname=="") {
+									contactname = "Контакт не указан";
+								}
+								contacts1 = '{"name":"'+contactname+'"'+contacts1+'}';
+								contacts1 = '{"request":{"contacts":{"add":['+contacts1+']}}}';
+								contactdata = JSON.parse(contacts1);
+								console.log( 'contacts:'+contacts1 );
+								userid = "";
+								$.post(
+									"https://new569657cfe698c.amocrm.ru/private/api/v2/json/contacts/set",
+									contactdata,
+									function( msgdata ) {
+										//получаем id созданного контакта
+										console.log( 'contactdata:'+JSON.stringify(msgdata) );
+										cdata15 = JSON.parse(JSON.stringify(msgdata));
+										userid = ""+cdata15.response.contacts.add[0].id;
+										srvtime = parseInt(cdata15.response.server_time);
+										console.log( 'srvtime:'+srvtime );
+										//==============
+										//создание сделок 10060455 -первичнй контакт 142 - успешно реализовано
+										branch1 = "";
+										spec1 = "";
+										rough1 = "";
+										time1 = "";
+										arrtime1 = [];
+										comment1 = "";
+										arrcomment1 = [];
+										for (var k14 = 0; k14 < arritextsid.length; k14++) {
+											if (arritextsid[k14]=='BRIEF_BRANCH') {												
+												branch1 = arritexts[k14];
+											}
+											if (arritextsid[k14]=='BRIEF_SPECIALIZATION') {
+												spec1 = arritexts[k14];
+											}
+											if (arritextsid[k14]=='BRIEF_ROUGH_COST') {
+												rough1 = arritexts[k14];
+											}
+											if (arritextsid[k14]=='BRIEF_TIME_LIMIT') {
+												//time1 = time1+arritexts[k14];
+												arrtime1.push(arritexts[k14]);
+											}
+											if (arritextsid[k14]=='BRIEF_COMMENT') {
+												//comment1 = comment1+arritexts[k14]+',';
+												arrcomment1.push(arritexts[k14]);
+											}
+										}
+										time1 = arrtime1.join();
+										comment1 = arrcomment1.join();
+										//заполнение custom fields
+										leads1 = "";
+										if ((branch1+spec1+rough1+time1+comment1)=='') {
+											
+										} else {
+											if (branch1=="") {
+										
+											} else {
+												leads1 = '{"id":"861116","values":[{"value":"'+branch1.replace(/"/g,"'")+'"}]}';
+											}
+											if (spec1=="") {
+										
+											} else {
+												leads1 = leads1 + ',';
+											}
+											if (spec1=="") {
+										
+											} else {
+												leads1 = leads1 + '{"id":"861118","values":[{"value":"'+spec1.replace(/"/g,"'")+'"}]}';												
+											}
+											if (rough1=="") {
+										
+											} else {
+												leads1 = leads1 + ',';
+											}
+											if (rough1=="") {
+										
+											} else {
+												leads1 = leads1 + '{"id":"861122","values":[{"value":"'+rough1.replace(/"/g,"'")+'"}]}';												
+											}
+											if (time1=="") {
+										
+											} else {
+												leads1 = leads1 + ',';
+											}
+											if (time1=="") {
+										
+											} else {
+												leads1 = leads1 + '{"id":"861120","values":[{"value":"'+time1.replace(/"/g,"'")+'"}]}';												
+											}											
+											if (comment1=="") {
+										
+											} else {
+												leads1 = leads1 + ',';
+												leads1 = leads1 + '{"id":"861124","values":[{"value":"'+comment1.replace(/"/g,"'").replace (/[\n\r]/g, ' ').replace (/\s{2,}/g, ' ').trim()+'"}]}';												
+											}
+									
+											leads1 = ',"custom_fields":  ['+leads1+']';
+										}
+										//================================
+										console.log('userid:'+userid);
+										leads1 = '{"name":"Сделка1 '+self.datestamp+'","status_id":10060455'+leads1+'}';
+										leads1 = '{"request":{"leads":{"add":['+leads1+']}}}';
+										console.log('leads1:'+leads1);
+										leaddata = JSON.parse(leads1);
+										
+										$.post(
+											"https://new569657cfe698c.amocrm.ru/private/api/v2/json/leads/set",
+											leaddata,
+											function( msgdata ) {
+												//сделка создана
+												console.log( 'leads msgdata:'+JSON.stringify(msgdata) );
+												leadresponce15 = JSON.parse(JSON.stringify(msgdata));
+												leadid = ""+leadresponce15.response.leads.add[0].id;
+												srvtime = parseInt(leadresponce15.response.server_time);
+												console.log( 'srvtime2:'+srvtime );
+												stime = new Date().getTime();
+												stime = Math.round(stime/1000)+10;
+												//======
+												stime = srvtime+2;
+												setTimeout(function(){
+													//после 2х секунд паузы
+													updatecontactdatastr = '{"request":{"contacts":{"update":[{"id":"'+userid+'","linked_leads_id":["'+leadid+'"],"last_modified":"'+stime+'"}]}}}';
+													console.log('update contact:'+updatecontactdatastr);
+													updatecontactdata = JSON.parse(updatecontactdatastr);
+													$.post(
+														"https://new569657cfe698c.amocrm.ru/private/api/v2/json/contacts/set",
+														updatecontactdata,
+														function( upddata ) {
+															console.log( 'upddata:'+JSON.stringify(upddata) );
+															//создание компании при успешном апдейте
+															srvtime = parseInt(upddata.response.server_time);
+															console.log( 'srvtime3:'+srvtime );
+															compan1 = "";
+															for (var k14 = 0; k14 < arritextsid.length; k14++) {
+																if (arritextsid[k14]=='CONTACT_COMPANY') {
+																	compan1 = ""+arritexts[k14];
+																}
+															}	
+															compname = compan1;
+															if (compan1=="") { 
+																console.log( 'compan1=0' );
+															}
+															else {
+																compan1 = '{"name":"'+compan1+'","linked_leads_id":["'+leadid+'"]}';
+																compan1 = '{"request":{"contacts":{"add":['+compan1+']}}}';
+																console.log( 'compan1:'+JSON.stringify(upddata) );
+																compandata = JSON.parse(compan1);
+																$.post(
+																	"https://new569657cfe698c.amocrm.ru/private/api/v2/json/company/set",
+																	compandata,
+																	function( cmpdata ) {
+																		//update контакта при создании компании
+																		console.log( 'compandata:'+JSON.stringify(cmpdata) );
+																		companid15 = JSON.parse(JSON.stringify(cmpdata));
+																		companid = ""+companid15.response.contacts.add[0].id;
+																		srvtime = parseInt(companid15.response.server_time);
+																		console.log( 'srvtime4:'+srvtime );
+																		stime = new Date().getTime();
+																		stime = Math.round(stime/1000)+20;
+																		stime = srvtime+2;
+																		
+																		updatecontactdatastr = '{"request":{"contacts":{"update":[{"id":"'+userid+'","company_name":"'+compname+'","last_modified":"'+stime+'"}]}}}';
+																		console.log( 'updcontact2.1:'+updatecontactdatastr );
+																		updatecontactdata = JSON.parse(updatecontactdatastr);
+																		$.post(
+																			"https://new569657cfe698c.amocrm.ru/private/api/v2/json/contacts/set",
+																			updatecontactdata,
+																			function( updcontact2 ) {
+																				console.log( 'updcontact2.2:'+JSON.stringify(updcontact2) );
+																			
+																			},
+																			"json"
+																		);
+																	},
+																	"json"
+																);
+															}
+															//===компания===============
+														},
+														"json"
+													);
+													//=================
+												}, 2000);												
+											},
+											"json"
+										);
+										//==============
+									},
+									"json"
+								);
+								
+							},
+							'text'
+						);
+						
+			
+					}					
+					console.log('Finish-OnClick-importhtml');
 
 				});
 
@@ -82,99 +395,15 @@ define(['jquery'], function($){
 					}
 				},
 			getData: function(){
-					console.log('StartGetData');
-					self.ddnumber = $('input[name="CFV[813270]"]').val();
+					console.log('StartGetData');					
 					var today = new Date();
+					self.mins = "" + today.getMinutes();
+					self.hour = "" + today.getHours();
 					self.daynum = "" + today.getDate();
 					self.monthnum = "" + (today.getMonth()+1); //January is 0!
-					self.yearnum = "" + today.getFullYear();
-					self.startdogdate = $('input[name="CFV[685758]"]').val(); //дата начала обучения
-					self.leadid = $('input[name="MAIN_ID"]').val(); //id сделки MAIN_ID или lead_id
-					self.zfullname = $('input[name="contact[NAME]"]').val();
-					tmpwdays = $('input[name="CFV[813354]"]').val();
-					if (tmpwdays=='1948330') {
-						self.wdays = 2;
-						self.zprice = 7800;
-					} else if (tmpwdays=='1948332') {
-						self.wdays = 10;
-						self.zprice = 25800;
-					} else if (tmpwdays=='1948334') {
-						self.wdays = 21;
-						self.zprice = 45800;
-					} else {
-
-					}
-					self.requisite = $('textarea[name="CFV[813368]"]').val();
+					self.yearnum = "" + today.getFullYear();	
+					self.datestamp = "" + today.getFullYear() + "-"+(today.getMonth()+1)+"-"+today.getDate()+" "+today.getHours()+":"+ today.getMinutes();
 					console.log('FinishGetData');
-			},
-			updateTextarea: function(txt, msg){
-				console.log('UpdateTextArea');
-				$('#send_result').html("");
-				var restxt =txt+" ";
-				restxt = restxt+" : ";
-				restxt = restxt+msg.dl_link;
-				$('.note-edit__body > textarea').trigger('focusin').val(restxt);
-				$('.note-edit__actions__submit').removeClass('button-input-disabled').trigger('click');
-			},
-			updateLink: function(msg){
-				console.log('UpdateLink v1:');
-				$('#send_result').html("");
-				var restxt = "" + msg.dl_link;
-				console.log('UpdateLink v2:' + restxt);
-				$('input[name="CFV[813398]"]').val(restxt);
-			},
-			checkdate2812: function(dat1,jsonstr) {
-				//console.log( 'checkdate2812  dat1: ' + dat1 + ' json: '+jsonstr);
-				var mnum1 = "" + (dat1.getMonth()+1);
-				var ynum1 = "" + dat1.getFullYear();
-				//console.log( 'checkdatestart mnum: ' + mnum1 + ' ynum: ' + ynum1);
-				obj = $.parseJSON( jsonstr );
-				//console.log( 'checkdatefor1:'+JSON.stringify(obj.data["2003"]["1"]));
-				sourcestr1 = JSON.stringify(obj.data[ynum1][mnum1]);
-				searchstr1 = '"'+ dat1.getDate() + '":{"isWorking":2}';
-				if(sourcestr1.indexOf(searchstr1)>=0) {
-					return false;
-					//console.log( 'dat1 - выходной');
-				} else {
-					//return true;
-					//console.log( 'dat1 - рабочий день');
-					if ((dat1.getDay()==0) || (dat1.getDay()==6)) {
-						//это вокресенье или суббота
-						return false;
-						//console.log( 'dat1 - рабочий день');
-					} else {
-						return true;
-						//console.log( 'dat1 - рабочий день');
-					}
-				}
-				//console.log( 'checkdate2812  finish');
-			},
-			getnext2812: function(dat2,jsonstr) {
-				//console.log( 'getnext2812:'+ dat2.getDay()); //sunday = 0
-				dat2.setDate(dat2.getDate() + 1);
-				var mnum2 = "" + (dat2.getMonth()+1);
-				var ynum2 = "" + dat2.getFullYear();
-
-				obj2 = $.parseJSON( jsonstr );
-				//console.log( 'checkdatefor1:'+JSON.stringify(obj2.data["2003"]["1"]));
-				sourcestr2 = JSON.stringify(obj2.data[ynum2][mnum2]);
-				searchstr2 = '"'+dat2.getDate()+'":{"isWorking":2}';
-				if(sourcestr2.indexOf(searchstr2)>=0) {
-					newdat = self.callbacks.getnext2812(dat2,jsonstr);
-					return newdat;
-					//console.log( 'dat2 - выходной');
-				} else {
-					if ((dat2.getDay()==0) || (dat2.getDay()==6)) {
-						//это вокресенье или суббота
-						newdat = self.callbacks.getnext2812(dat2,jsonstr);
-						return newdat;
-						//console.log( 'dat2 - рабочий день');
-					} else {
-						return dat2;
-						//console.log( 'dat2 - рабочий день');
-					}
-				}
-
 			}
 		};
 		return this;
