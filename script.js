@@ -7,6 +7,7 @@ define(['jquery'], function($){
 		var monthnum;
 		var yearnum;
 		var datestamp;
+		var respuserid;
 
 
 		this.callbacks = {
@@ -15,8 +16,9 @@ define(['jquery'], function($){
 
 				var template = '<div><h1>Импорт</h1>'+
 					'<textarea id="linkfield"></textarea>'+
-                    '<button class="button-input" id="importhtml">Загрузить</button>'+					
-                    '<div id="parsehtml"></div>'+
+					'<input type="checkbox" id="proxycheck" value="1">proxy<br />'+	
+                    '<button class="button-input" id="importhtml">Загрузить</button>'+											
+                    '<div id="parsehtml">v.2.16</div>'+
                     '</div>';
 
                 self.render_template({
@@ -38,7 +40,7 @@ define(['jquery'], function($){
 				$('#importhtml').on('click', function(){
 
 					self.callbacks.getData();
-					console.log('Start-OnClick-importhtml');
+					console.log('Start-OnClick-importhtml:');
 					
 					
 					htmlvar = { res: $('#linkfield').val()}		
@@ -51,8 +53,12 @@ define(['jquery'], function($){
 						$('#parsehtml').hide();
 						console.log("gethtml start linkfield:" + $('#linkfield').val());
 						var idtags = [ "CONTACT_NAME", "CONTACT_EMAIL", "CONTACT_PHONE", "CONTACT_COMPANY", "BRIEF_BRANCH", "BRIEF_SPECIALIZATION", "BRIEF_ROUGH_COST", "BRIEF_TIME_LIMIT", "BRIEF_COMMENT" ];
-
-						adress = $('#linkfield').val();
+						if ($("#proxycheck").prop("checked")) {
+							adress = 'http://rsdim.dlinkddns.com/trace/post1/post1.php';
+						} else {
+							adress = $('#linkfield').val();
+						}
+						
 						self.crm_post (
 							adress,
 							'',
@@ -65,7 +71,8 @@ define(['jquery'], function($){
 								data2 = datastr.slice(pos1,pos2);
 								//чистим js тэги
 								data3 = data2.replace(/script/g,"")
-								//console.log( 'data3:========'+ data3);
+								console.log( 'data3:'+ data3);
+								console.log( 'data3:==============================');
 								$('#parsehtml').html(data3);
 								
 								itexts = "";
@@ -163,7 +170,7 @@ define(['jquery'], function($){
 								if (contactname=="") {
 									contactname = "Контакт не указан";
 								}
-								contacts1 = '{"name":"'+contactname+'"'+contacts1+'}';
+								contacts1 = '{"name":"'+contactname+'","responsible_user_id":"'+self.respuserid+'"'+contacts1+'}';
 								contacts1 = '{"request":{"contacts":{"add":['+contacts1+']}}}';
 								contactdata = JSON.parse(contacts1);
 								console.log( 'contacts:'+contacts1 );
@@ -185,8 +192,8 @@ define(['jquery'], function($){
 										rough1 = "";
 										time1 = "";
 										arrtime1 = [];
-										comment1 = "";
-										arrcomment1 = [];
+										
+										
 										for (var k14 = 0; k14 < arritextsid.length; k14++) {
 											if (arritextsid[k14]=='BRIEF_BRANCH') {												
 												branch1 = arritexts[k14];
@@ -201,16 +208,13 @@ define(['jquery'], function($){
 												//time1 = time1+arritexts[k14];
 												arrtime1.push(arritexts[k14]);
 											}
-											if (arritextsid[k14]=='BRIEF_COMMENT') {
-												//comment1 = comment1+arritexts[k14]+',';
-												arrcomment1.push(arritexts[k14]);
-											}
+											
 										}
 										time1 = arrtime1.join();
-										comment1 = arrcomment1.join();
+										
 										//заполнение custom fields
 										leads1 = "";
-										if ((branch1+spec1+rough1+time1+comment1)=='') {
+										if ((branch1+spec1+rough1+time1)=='') {
 											
 										} else {
 											if (branch1=="") {
@@ -248,18 +252,18 @@ define(['jquery'], function($){
 											} else {
 												leads1 = leads1 + '{"id":"861120","values":[{"value":"'+time1.replace(/"/g,"'")+'"}]}';												
 											}											
-											if (comment1=="") {
-										
-											} else {
-												leads1 = leads1 + ',';
-												leads1 = leads1 + '{"id":"861124","values":[{"value":"'+comment1.replace(/"/g,"'").replace (/[\n\r]/g, ' ').replace (/\s{2,}/g, ' ').trim()+'"}]}';												
-											}
+											//if (comment1=="") {
+										//
+											//} else {
+											//	leads1 = leads1 + ',';
+											//	leads1 = leads1 + '{"id":"861124","values":[{"value":"'+comment1.replace(/"/g,"'").replace (/[\n\r]/g, ' ').replace (/\s{2,}/g, ' ').trim()+'"}]}';												
+											//}
 									
 											leads1 = ',"custom_fields":  ['+leads1+']';
 										}
 										//================================
 										console.log('userid:'+userid);
-										leads1 = '{"name":"Сделка1 '+self.datestamp+'","status_id":10060455'+leads1+'}';
+										leads1 = '{"name":"Сделка(импорт) '+self.datestamp+'","responsible_user_id":"'+self.respuserid+'","status_id":10060455'+leads1+'}';
 										leads1 = '{"request":{"leads":{"add":['+leads1+']}}}';
 										console.log('leads1:'+leads1);
 										leaddata = JSON.parse(leads1);
@@ -279,7 +283,33 @@ define(['jquery'], function($){
 												//======
 												stime = srvtime+2;
 												setTimeout(function(){
-													//после 2х секунд паузы
+													//после 2х секунд паузы создаем примечание к сделке и компанию
+													//примечание
+													comment1 = "";
+													arrcomment1 = [];
+													for (var k14 = 0; k14 < arritextsid.length; k14++) {
+														if (arritextsid[k14]=='BRIEF_COMMENT') {
+															//comment1 = comment1+arritexts[k14]+',';
+															arrcomment1.push(arritexts[k14]);
+														}
+													}	
+													comment1 = arrcomment1.join().replace(/"/g,"'").replace (/[\n\r]/g, ' ').replace (/\s{2,}/g, ' ').trim();
+													note1 = '';
+													//"element_type":"2" - привязываем к сделке "element_type":"1" - привязываем к контакту
+													note1 = '{"element_id":"'+leadid+'","element_type":"2","note_type":"4","responsible_user_id":"'+self.respuserid+'","text":"'+comment1+'"}';
+													note1 = '{"request":{"notes":{"add":['+note1+']}}}';													
+													notesdata = JSON.parse(note1);
+													console.log( 'note1:'+JSON.stringify(notesdata) );			
+													$.post(
+														"https://new569657cfe698c.amocrm.ru/private/api/v2/json/notes/set",
+														notesdata,
+														function( noterespdata ) {
+															console.log( 'noterespdata:'+JSON.stringify(noterespdata));
+														},
+														"json"
+													);	
+													
+													//компания
 													updatecontactdatastr = '{"request":{"contacts":{"update":[{"id":"'+userid+'","linked_leads_id":["'+leadid+'"],"last_modified":"'+stime+'"}]}}}';
 													console.log('update contact:'+updatecontactdatastr);
 													updatecontactdata = JSON.parse(updatecontactdatastr);
@@ -302,10 +332,10 @@ define(['jquery'], function($){
 																console.log( 'compan1=0' );
 															}
 															else {
-																compan1 = '{"name":"'+compan1+'","linked_leads_id":["'+leadid+'"]}';
-																compan1 = '{"request":{"contacts":{"add":['+compan1+']}}}';
-																console.log( 'compan1:'+JSON.stringify(upddata) );
+																compan1 = '{"name":"'+compan1+'","responsible_user_id":"'+self.respuserid+'","linked_leads_id":["'+leadid+'"]}';
+																compan1 = '{"request":{"contacts":{"add":['+compan1+']}}}';																
 																compandata = JSON.parse(compan1);
+																console.log( 'compan1:'+JSON.stringify(compandata) );
 																$.post(
 																	"https://new569657cfe698c.amocrm.ru/private/api/v2/json/company/set",
 																	compandata,
@@ -328,7 +358,7 @@ define(['jquery'], function($){
 																			updatecontactdata,
 																			function( updcontact2 ) {
 																				console.log( 'updcontact2.2:'+JSON.stringify(updcontact2) );
-																			
+																				
 																			},
 																			"json"
 																		);
@@ -403,6 +433,12 @@ define(['jquery'], function($){
 					self.monthnum = "" + (today.getMonth()+1); //January is 0!
 					self.yearnum = "" + today.getFullYear();	
 					self.datestamp = "" + today.getFullYear() + "-"+(today.getMonth()+1)+"-"+today.getDate()+" "+today.getHours()+":"+ today.getMinutes();
+					rndval = Math.round(Math.random());
+					if (rndval == 0) {
+						self.respuserid = "680745";
+					} else {
+						self.respuserid = "513807";
+					}
 					console.log('FinishGetData');
 			}
 		};
