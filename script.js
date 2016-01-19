@@ -13,13 +13,20 @@ define(['jquery'], function($){
 		this.callbacks = {
 			render: function(){
 				//console.log('render'); test 7zip
-
-				var template = '<div><h1>Импорт</h1>'+
-					'<textarea id="linkfield"></textarea>'+
-					'<input type="checkbox" id="proxycheck" value="1">proxy<br />'+	
-                    '<button class="button-input" id="importhtml">Загрузить</button>'+											
-                    '<div id="parsehtml">v.2.16</div>'+
-                    '</div>';
+				w_code = self.get_settings().widget_code; //в данном случае w_code='new-widget'
+				var template = '<div><div class="whitebackground"><div class="widgetback1">'+
+					'<p>Для импорта заявки из личного кабинета amoCRM проделайте следующие шаги:</p>'+
+					'<p>1. Перейдите по этой ссылке <a href="#">(ссылка на ЛК)</a></p>'+
+					'<p>2. Поставьте галочку "Proxy"</p>'+
+					'<p>3. Скопируйте ссылку из адресной строки в поле ниже и нажмите "Добавить"</p>'+
+					'</div><hr>'+
+					'<textarea id="linkfield" class="widgetta1"></textarea><br />'+
+					'<p><input type="checkbox" class="widgetcheckclass1" id="proxycheck" value="1">&nbsp;proxy</p>'+	
+                    '<center><button class="button-input" class="widgetbutton1" id="importhtml">Загрузить</button></center>'+											
+					'</div>'+
+                    '<div id="parsehtml">v.3.55</div>'+
+                    '</div>'+
+					'<link type="text/css" rel="stylesheet" href="/upl/'+w_code+'/widget/style.css" >';
 
                 self.render_template({
                     caption:{
@@ -33,12 +40,13 @@ define(['jquery'], function($){
 				return true;
 			},
 			init: function(){
-
+				console.log('Init:');
 				return true;
 			},
 			bind_actions: function(){
 				$('#importhtml').on('click', function(){
-
+					//settingsdata = JSON.parse(self.get_settings());
+					console.log('settings:'+JSON.stringify(self.get_settings()));
 					self.callbacks.getData();
 					console.log('Start-OnClick-importhtml:');
 					
@@ -58,21 +66,22 @@ define(['jquery'], function($){
 						} else {
 							adress = $('#linkfield').val();
 						}
-						
+						console.log("adress:"+adress);
 						self.crm_post (
 							adress,
 							'',
 							function(data) {
 								//подрезка строчки
 								datastr = "" + data;
+								console.log( 'datastr:'+ datastr);
 								pos1 = datastr.indexOf('<body>')+6;
 								pos2 = datastr.indexOf('</body>');
 								console.log( 'Pos1:'+pos1 +' Pos2:'+pos2);
 								data2 = datastr.slice(pos1,pos2);
 								//чистим js тэги
 								data3 = data2.replace(/script/g,"")
-								console.log( 'data3:'+ data3);
-								console.log( 'data3:==============================');
+								//console.log( 'data3:'+ data3);
+								//console.log( 'data3:==============================');
 								$('#parsehtml').html(data3);
 								
 								itexts = "";

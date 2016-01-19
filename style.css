@@ -1,0 +1,74 @@
+.card-widgets__widget-importwidget{
+	background-color: #16315c; /* темно синий*/
+	color:#fff;
+	font-family: tahoma, tahoma, verdana, arial, sans-serif;
+}
+
+.jc-ac-caption{
+	background-color: #16315c; /* темно синий*/
+	color:#fff;
+	font-family: tahoma, tahoma, verdana, arial, sans-serif;
+}
+
+.card-widgets__widget a{	
+	color:#222;
+}
+
+.card-widgets__widget hr{
+	width:80%;
+}	
+/* инф панель*/
+.widgetback1{
+	background-color: #fff; 
+	color: #666;
+	width:100%;
+	margin-left:0px;
+	margin-top:5px;
+	margin-right:7px;	
+	margin-bottom:10px;
+	padding-right:2px;
+	padding-bottom:2px;
+	padding-top:8px;
+}
+
+.widgetback1 p{	
+	margin:10px;		
+}
+
+.whitebackground{
+	background-color: #fff; 
+}
+
+.whitebackground p{
+	color: #666; 
+	margin-left: 10px;
+}
+
+/* кнопка загрузить*/
+#importhtml {
+	background-color: #00a1e1; /* голубой*/
+	border-style:none;
+	color: #fff;
+	width:60%;
+	margin-left:0px;
+	margin-top:5px;
+	margin-right:7px;		
+	margin-bottom:15px;
+	padding-right:2px;
+}
+
+.widgetta1 {
+	width:83%;
+	min-height: 100px;
+	color:#16315c;
+	background-color:#eee;
+	margin-left:10px;	
+	margin-right:7px;	
+	padding-left:10px;
+	padding-right:10px;
+}
+
+.widgetcheckclass1{
+	margin-left:0px;
+	color:#666;
+}
