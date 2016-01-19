@@ -10,7 +10,7 @@ define(['jquery'], function($){
 		var monthnum;
 		var yearnum;
 		var datestamp;
-		var respuserid;
+		
 
 
 		this.callbacks = {
@@ -57,11 +57,16 @@ define(['jquery'], function($){
 					// ====================================================
 					// =======параметры виджета============================
 					// ====================================================
+					// домен аккаунта
+					striddomain = "new569657cfe698c";
 					// id полей для импорта
 					var idtags = [ "CONTACT_NAME", "CONTACT_EMAIL", "CONTACT_PHONE", "CONTACT_COMPANY", "BRIEF_BRANCH", "BRIEF_SPECIALIZATION", "BRIEF_ROUGH_COST", "BRIEF_TIME_LIMIT", "BRIEF_COMMENT" ];
 					// id полей в АМО
-					// сущность ответсвенный пользователь==================
-					// см. self.respuserid в getData
+					// сущность ответсвенный пользователь==================					
+					struser1id = "680745";
+					struser2id = "513807";
+					rndval = Math.round(Math.random());
+					if (rndval == 0) {respuserid = struser1id} else {respuserid = struser2id}
 					// сущность контакт====================================
 					// "CONTACT_NAME"
 					// нет параметра					
@@ -82,6 +87,8 @@ define(['jquery'], function($){
 					stridbriefrough = "861122";
 					// "BRIEF_TIME_LIMIT"
 					stridbrieftime = "861120";
+					// "статус сделки - 10060455 новая"
+					stridlead = '10060455';
 					// сущность Примечание к сделке========================
 					// "BRIEF_COMMENT"
 					// нет параметра					
@@ -217,13 +224,13 @@ define(['jquery'], function($){
 								if (contactname=="") {
 									contactname = "Контакт не указан";
 								}
-								contacts1 = '{"name":"'+contactname+'","responsible_user_id":"'+self.respuserid+'"'+contacts1+'}';
+								contacts1 = '{"name":"'+contactname+'","responsible_user_id":"'+respuserid+'"'+contacts1+'}';
 								contacts1 = '{"request":{"contacts":{"add":['+contacts1+']}}}';
 								contactdata = JSON.parse(contacts1);
 								console.log( 'contacts:'+contacts1 );
 								userid = "";
 								$.post(
-									"https://new569657cfe698c.amocrm.ru/private/api/v2/json/contacts/set",
+									"https://"+striddomain+".amocrm.ru/private/api/v2/json/contacts/set",
 									contactdata,
 									function( msgdata ) {
 										//получаем id созданного контакта
@@ -310,13 +317,13 @@ define(['jquery'], function($){
 										}
 										//================================
 										console.log('userid:'+userid);
-										leads1 = '{"name":"'+strleadname+'","responsible_user_id":"'+self.respuserid+'","status_id":10060455'+leads1+'}';
+										leads1 = '{"name":"'+strleadname+'","responsible_user_id":"'+respuserid+'","status_id":'+stridlead+leads1+'}';
 										leads1 = '{"request":{"leads":{"add":['+leads1+']}}}';
 										console.log('leads1:'+leads1);
 										leaddata = JSON.parse(leads1);
 										
 										$.post(
-											"https://new569657cfe698c.amocrm.ru/private/api/v2/json/leads/set",
+											"https://"+striddomain+".amocrm.ru/private/api/v2/json/leads/set",
 											leaddata,
 											function( msgdata ) {
 												//сделка создана
@@ -343,12 +350,12 @@ define(['jquery'], function($){
 													comment1 = arrcomment1.join().replace(/"/g,"'").replace (/[\n\r]/g, ' ').replace (/\s{2,}/g, ' ').trim();
 													note1 = '';
 													//"element_type":"2" - привязываем к сделке "element_type":"1" - привязываем к контакту
-													note1 = '{"element_id":"'+leadid+'","element_type":"2","note_type":"4","responsible_user_id":"'+self.respuserid+'","text":"'+comment1+'"}';
+													note1 = '{"element_id":"'+leadid+'","element_type":"2","note_type":"4","responsible_user_id":"'+respuserid+'","text":"'+comment1+'"}';
 													note1 = '{"request":{"notes":{"add":['+note1+']}}}';													
 													notesdata = JSON.parse(note1);
 													console.log( 'note1:'+JSON.stringify(notesdata) );			
 													$.post(
-														"https://new569657cfe698c.amocrm.ru/private/api/v2/json/notes/set",
+														"https://"+striddomain+".amocrm.ru/private/api/v2/json/notes/set",
 														notesdata,
 														function( noterespdata ) {
 															console.log( 'noterespdata:'+JSON.stringify(noterespdata));
@@ -361,7 +368,7 @@ define(['jquery'], function($){
 													console.log('update contact:'+updatecontactdatastr);
 													updatecontactdata = JSON.parse(updatecontactdatastr);
 													$.post(
-														"https://new569657cfe698c.amocrm.ru/private/api/v2/json/contacts/set",
+														"https://"+striddomain+".amocrm.ru/private/api/v2/json/contacts/set",
 														updatecontactdata,
 														function( upddata ) {
 															console.log( 'upddata:'+JSON.stringify(upddata) );
@@ -381,12 +388,12 @@ define(['jquery'], function($){
 																console.log( 'compan1=0' );
 															}
 															else {
-																compan1 = '{"name":"'+compname+'","responsible_user_id":"'+self.respuserid+'","linked_leads_id":["'+leadid+'"]}';
+																compan1 = '{"name":"'+compname+'","responsible_user_id":"'+respuserid+'","linked_leads_id":["'+leadid+'"]}';
 																compan1 = '{"request":{"contacts":{"add":['+compan1+']}}}';																
 																compandata = JSON.parse(compan1);
 																console.log( 'compan1:'+JSON.stringify(compandata) );
 																$.post(
-																	"https://new569657cfe698c.amocrm.ru/private/api/v2/json/company/set",
+																	"https://"+striddomain+".amocrm.ru/private/api/v2/json/company/set",
 																	compandata,
 																	function( cmpdata ) {
 																		//update контакта при создании компании
@@ -403,7 +410,7 @@ define(['jquery'], function($){
 																		console.log( 'updcontact2.1:'+updatecontactdatastr );
 																		updatecontactdata = JSON.parse(updatecontactdatastr);
 																		$.post(
-																			"https://new569657cfe698c.amocrm.ru/private/api/v2/json/contacts/set",
+																			"https://"+striddomain+".amocrm.ru/private/api/v2/json/contacts/set",
 																			updatecontactdata,
 																			function( updcontact2 ) {
 																				console.log( 'updcontact2.2:'+JSON.stringify(updcontact2) );
@@ -482,12 +489,7 @@ define(['jquery'], function($){
 					self.monthnum = "" + (today.getMonth()+1); //January is 0!
 					self.yearnum = "" + today.getFullYear();	
 					self.datestamp = "" + today.getFullYear() + "-"+(today.getMonth()+1)+"-"+today.getDate()+" "+today.getHours()+":"+ today.getMinutes();
-					rndval = Math.round(Math.random());
-					if (rndval == 0) {
-						self.respuserid = "680745";
-					} else {
-						self.respuserid = "513807";
-					}
+					
 					console.log('FinishGetData');
 			}
 		};

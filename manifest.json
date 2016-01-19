@@ -5,7 +5,7 @@
             "short_description": "Импорт данных из URL",
             "code": "importwidget",
             "secret_key": "cf822d2080df4f856eea94e221d0825072847b90dec63ac782cac230ddaec381",
-            "version": "1.3.64",
+            "version": "1.3.65",
             "interface_version": 2,
             "init_once": false,
             "locale":[
