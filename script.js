@@ -1,7 +1,10 @@
 define(['jquery'], function($){
     var CustomWidget = function () {
+		//===============================================
+		//виджет для импорта данных в AMO CRM 
+		//весь код работает по кнопке id=#importhtml
+		//===============================================
     	var self = this;
-
     	var ddnumber;
 		var daynum;
 		var monthnum;
@@ -24,7 +27,7 @@ define(['jquery'], function($){
 					'<p><input type="checkbox" class="widgetcheckclass1" id="proxycheck" value="1">&nbsp;proxy</p>'+	
                     '<center><button class="button-input" class="widgetbutton1" id="importhtml">Загрузить</button></center>'+											
 					'</div>'+
-                    '<div id="parsehtml">v.3.55</div>'+
+                    '<div id="parsehtml"></div>'+
                     '</div>'+
 					'<link type="text/css" rel="stylesheet" href="/upl/'+w_code+'/widget/style.css" >';
 
@@ -36,7 +39,12 @@ define(['jquery'], function($){
                     body:'',
                     render :  template
                 });
-
+				//простановка версии виджета в div id=#parsehtml
+				$jsonurl = '/upl/'+w_code+'/widget/manifest.json';
+				$.getJSON( $jsonurl, function( data ) {
+					vers19011 = data.widget.version;
+					$('#parsehtml').html('v.'+vers19011);					
+				});
 				return true;
 			},
 			init: function(){
@@ -45,14 +53,46 @@ define(['jquery'], function($){
 			},
 			bind_actions: function(){
 				$('#importhtml').on('click', function(){
-					//settingsdata = JSON.parse(self.get_settings());
-					console.log('settings:'+JSON.stringify(self.get_settings()));
 					self.callbacks.getData();
+					// ====================================================
+					// =======параметры виджета============================
+					// ====================================================
+					// id полей для импорта
+					var idtags = [ "CONTACT_NAME", "CONTACT_EMAIL", "CONTACT_PHONE", "CONTACT_COMPANY", "BRIEF_BRANCH", "BRIEF_SPECIALIZATION", "BRIEF_ROUGH_COST", "BRIEF_TIME_LIMIT", "BRIEF_COMMENT" ];
+					// id полей в АМО
+					// сущность ответсвенный пользователь==================
+					// см. self.respuserid в getData
+					// сущность контакт====================================
+					// "CONTACT_NAME"
+					// нет параметра					
+					// "CONTACT_EMAIL"
+					stridcontactemail = "861028";
+					// "CONTACT_PHONE"
+					stridcontactph = "861026";
+					// "CONTACT_COMPANY" - в сущность компания=============
+					// нет параметра
+					// сущность сделка=====================================
+					// "Имя сделки"
+					strleadname = 'Сделка(импорт) '+self.datestamp;
+					// "BRIEF_BRANCH"
+					stridbriefbranch = "861116";
+					// "BRIEF_SPECIALIZATION"
+					strbriefspec = "861118";
+					// "BRIEF_ROUGH_COST"
+					stridbriefrough = "861122";
+					// "BRIEF_TIME_LIMIT"
+					stridbrieftime = "861120";
+					// сущность Примечание к сделке========================
+					// "BRIEF_COMMENT"
+					// нет параметра					
+					// прокси url с авторизацией
+					strurlproxy = 'http://rsdim.dlinkddns.com/trace/post1/post1.php';
+					// ===конец параметров==================================
+					
+					
 					console.log('Start-OnClick-importhtml:');
-					
-					
 					htmlvar = { res: $('#linkfield').val()}		
-					strdomain = "rsdim.dlinkddns.com";
+					
 					
 					if ($('#linkfield').val()==="") {
 						alert("Адрес не может быть пустой строкой");
@@ -60,16 +100,16 @@ define(['jquery'], function($){
 						//обработка input
 						$('#parsehtml').hide();
 						console.log("gethtml start linkfield:" + $('#linkfield').val());
-						var idtags = [ "CONTACT_NAME", "CONTACT_EMAIL", "CONTACT_PHONE", "CONTACT_COMPANY", "BRIEF_BRANCH", "BRIEF_SPECIALIZATION", "BRIEF_ROUGH_COST", "BRIEF_TIME_LIMIT", "BRIEF_COMMENT" ];
+						
 						if ($("#proxycheck").prop("checked")) {
-							adress = 'http://rsdim.dlinkddns.com/trace/post1/post1.php';
+							adress = strurlproxy;
 						} else {
-							adress = $('#linkfield').val();
+							adress = $('#linkfield').val();							
 						}
-						console.log("adress:"+adress);
+						console.log("adress qqq:"+adress);
 						self.crm_post (
 							adress,
-							'',
+							htmlvar,
 							function(data) {
 								//подрезка строчки
 								datastr = "" + data;
@@ -159,7 +199,7 @@ define(['jquery'], function($){
 									if (emails=="") {
 										
 									} else {
-										contacts1 = '{"id":861028,"values":[{"value":"'+emails+'","enum":"WORK"}]}';
+										contacts1 = '{"id":'+stridcontactemail+',"values":[{"value":"'+emails+'","enum":"WORK"}]}';
 									}
 									if (emails=="" || phones=="") {
 										
@@ -169,10 +209,8 @@ define(['jquery'], function($){
 									if (phones=="") {
 										
 									} else {
-										contacts1 = contacts1 + '{"id":861026,"values":[{"value":"'+phones+'","enum":"WORK"}]}';
-									}
-									//'{"id":861028,"value":"'+arritexts[k14]+'"}';
-									//'{"id":861026,"value":"'+arritexts[k14]+'"}';
+										contacts1 = contacts1 + '{"id":'+stridcontactph+',"values":[{"value":"'+phones+'","enum":"WORK"}]}';
+									}									
 									contacts1 = ',"custom_fields":  ['+contacts1+']';
 									
 								}
@@ -229,7 +267,7 @@ define(['jquery'], function($){
 											if (branch1=="") {
 										
 											} else {
-												leads1 = '{"id":"861116","values":[{"value":"'+branch1.replace(/"/g,"'")+'"}]}';
+												leads1 = '{"id":"'+stridbriefbranch+'","values":[{"value":"'+branch1.replace(/"/g,"'")+'"}]}';
 											}
 											if (spec1=="") {
 										
@@ -239,7 +277,7 @@ define(['jquery'], function($){
 											if (spec1=="") {
 										
 											} else {
-												leads1 = leads1 + '{"id":"861118","values":[{"value":"'+spec1.replace(/"/g,"'")+'"}]}';												
+												leads1 = leads1 + '{"id":"'+strbriefspec+'","values":[{"value":"'+spec1.replace(/"/g,"'")+'"}]}';												
 											}
 											if (rough1=="") {
 										
@@ -249,7 +287,7 @@ define(['jquery'], function($){
 											if (rough1=="") {
 										
 											} else {
-												leads1 = leads1 + '{"id":"861122","values":[{"value":"'+rough1.replace(/"/g,"'")+'"}]}';												
+												leads1 = leads1 + '{"id":"'+stridbriefrough+'","values":[{"value":"'+rough1.replace(/"/g,"'")+'"}]}';												
 											}
 											if (time1=="") {
 										
@@ -259,7 +297,7 @@ define(['jquery'], function($){
 											if (time1=="") {
 										
 											} else {
-												leads1 = leads1 + '{"id":"861120","values":[{"value":"'+time1.replace(/"/g,"'")+'"}]}';												
+												leads1 = leads1 + '{"id":"'+stridbrieftime+'","values":[{"value":"'+time1.replace(/"/g,"'")+'"}]}';												
 											}											
 											//if (comment1=="") {
 										//
@@ -272,7 +310,7 @@ define(['jquery'], function($){
 										}
 										//================================
 										console.log('userid:'+userid);
-										leads1 = '{"name":"Сделка(импорт) '+self.datestamp+'","responsible_user_id":"'+self.respuserid+'","status_id":10060455'+leads1+'}';
+										leads1 = '{"name":"'+strleadname+'","responsible_user_id":"'+self.respuserid+'","status_id":10060455'+leads1+'}';
 										leads1 = '{"request":{"leads":{"add":['+leads1+']}}}';
 										console.log('leads1:'+leads1);
 										leaddata = JSON.parse(leads1);
@@ -336,12 +374,14 @@ define(['jquery'], function($){
 																	compan1 = ""+arritexts[k14];
 																}
 															}	
-															compname = compan1;
+															compname = compan1.replace(/"/g,"'");
+															
+															console.log( 'srvtime3:'+srvtime );
 															if (compan1=="") { 
 																console.log( 'compan1=0' );
 															}
 															else {
-																compan1 = '{"name":"'+compan1+'","responsible_user_id":"'+self.respuserid+'","linked_leads_id":["'+leadid+'"]}';
+																compan1 = '{"name":"'+compname+'","responsible_user_id":"'+self.respuserid+'","linked_leads_id":["'+leadid+'"]}';
 																compan1 = '{"request":{"contacts":{"add":['+compan1+']}}}';																
 																compandata = JSON.parse(compan1);
 																console.log( 'compan1:'+JSON.stringify(compandata) );
